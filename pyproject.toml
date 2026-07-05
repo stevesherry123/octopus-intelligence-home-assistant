@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "octopus-intelligence"
+version = "0.4.0"
+description = "Local-first Octopus Agile price analysis for Home Assistant"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+ai = ["openai>=1.0"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+octopus-intelligence = "octopus_intelligence.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

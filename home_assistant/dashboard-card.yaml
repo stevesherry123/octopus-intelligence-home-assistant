@@ -1,0 +1,74 @@
+type: vertical-stack
+cards:
+  - type: custom:octopus-intelligence-chart
+    entity: sensor.octopus_intelligence
+    title: 48-hour price outlook
+    height: 320
+
+  - type: markdown
+    title: Octopus Intelligence
+    content: >-
+      {% set entity = 'sensor.octopus_intelligence' %}
+      {% set change = state_attr(entity, 'difference_percent') %}
+      {% set windows = state_attr(entity, 'cheapest_windows') or {} %}
+      {% set cheap = windows.get('2_hours') %}
+      {% set free = state_attr(entity, 'free_or_negative_periods') or [] %}
+      {% set quality = state_attr(entity, 'data_quality') or {} %}
+
+      **Average:** {{ states(entity) | float(0) | round(2) }} p/kWh
+
+      {% if change is not none %}
+      **Compared with the last 14 days:** {{ change | abs | round(1) }}% {{ 'higher' if change > 0 else 'lower' }}
+      {% else %}
+      **Recent comparison:** Not enough history yet
+      {% endif %}
+
+      {% if cheap %}
+      **Cheapest two-hour window:**
+      {{ as_timestamp(cheap.start_utc) | timestamp_custom('%a %H:%M', true) }}–{{ as_timestamp(cheap.end_utc) | timestamp_custom('%H:%M', true) }}
+      at an average {{ cheap.average_p_per_kwh | round(2) }} p/kWh
+      {% endif %}
+
+      {% if free | length > 0 %}
+      ⚡ **{{ free | length }} free or negative half-hour period{{ '' if free | length == 1 else 's' }} found.**
+      {% else %}
+      No free or negative periods are currently forecast.
+      {% endif %}
+
+      **Data quality:** {{ quality.get('status', 'unknown') | title }} —
+      {{ quality.get('received_periods', '?') }}/{{ quality.get('expected_periods', '?') }} periods,
+      {{ quality.get('baseline_days_used', '?') }}/{{ quality.get('baseline_days_requested', '?') }} historical days.
+
+      {% set commentary = state_attr(entity, 'commentary') %}
+      {% if commentary %}
+      {{ commentary }}
+      {% endif %}
+
+  - type: gauge
+    entity: sensor.octopus_intelligence
+    name: Forecast average
+    unit: p/kWh
+    min: -10
+    max: 60
+    severity:
+      green: 0
+      yellow: 20
+      red: 35
+
+  - type: entities
+    title: Engine status
+    entities:
+      - entity: sensor.octopus_intelligence
+        name: Average price
+      - type: attribute
+        entity: sensor.octopus_intelligence
+        attribute: generated_at_utc
+        name: Last analysis
+      - type: attribute
+        entity: sensor.octopus_intelligence
+        attribute: commentary_status
+        name: AI commentary
+      - type: attribute
+        entity: sensor.octopus_intelligence
+        attribute: history_refresh_status
+        name: History cache
