@@ -2,6 +2,7 @@ name: Octopus Intelligence
 version: "0.4.0"
 slug: octopus_intelligence
 description: Local-first Octopus Agile price analysis and AI commentary
+url: https://github.com/stevesherry123/octopus-intelligence-home-assistant
 startup: application
 boot: auto
 init: false
@@ -31,4 +32,3 @@ schema:
   lookback_days: int(1,90)
   history_cache_hours: int(1,168)
   timezone: str
-
