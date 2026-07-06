@@ -50,6 +50,7 @@ def run_scheduler(
         status_file = data_dir / "scheduler-status.json"
         failures = 0
         runs = 0
+        next_run = datetime.now(timezone.utc)
         client = (
             HomeAssistantClient(settings.ha_url, settings.ha_token)
             if settings.ha_token
@@ -109,23 +110,20 @@ def run_scheduler(
                 _write_json_atomic(status_file, status)
 
         while not stop.is_set():
-            started = datetime.now(timezone.utc)
-            if runs == 0:
-                should_run = True
-                trigger_changed = False
-            else:
-                should_run = False
-                trigger_changed = False
-                if client is not None:
-                    try:
-                        current_ready_state = trigger_state()
-                        trigger_changed = (
-                            current_ready_state is not None
-                            and current_ready_state != last_ready_state
-                        )
-                        should_run = trigger_changed
-                    except Exception:
-                        logging.exception("Unable to poll next-day price trigger")
+            now = datetime.now(timezone.utc)
+            trigger_changed = False
+            if runs > 0 and client is not None:
+                try:
+                    current_ready_state = trigger_state()
+                    trigger_changed = (
+                        current_ready_state is not None
+                        and current_ready_state != last_ready_state
+                    )
+                    last_ready_state = current_ready_state
+                except Exception:
+                    logging.exception("Unable to poll next-day price trigger")
+
+            should_run = runs == 0 or now >= next_run or trigger_changed
 
             if should_run:
                 run_once(triggered_by_feed=trigger_changed)
@@ -135,10 +133,9 @@ def run_scheduler(
                     break
                 continue
 
-            next_run = started + timedelta(hours=interval_hours)
             status = {
                 "state": "waiting",
-                "started_at_utc": started.isoformat().replace("+00:00", "Z"),
+                "started_at_utc": now.isoformat().replace("+00:00", "Z"),
                 "consecutive_failures": failures,
                 "next_run_utc": next_run.isoformat().replace("+00:00", "Z"),
             }
@@ -147,7 +144,6 @@ def run_scheduler(
                 if last_ready_state is not None:
                     status["last_trigger_value"] = last_ready_state
             _write_json_atomic(status_file, status)
-            next_run = started + timedelta(hours=interval_hours)
             if max_runs is not None and runs >= max_runs:
                 break
             remaining = min(

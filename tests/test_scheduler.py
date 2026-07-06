@@ -40,9 +40,30 @@ class SchedulerTests(TestCase):
                 return {"state": next(self.states)}
 
         with TemporaryDirectory() as directory:
-            settings = Settings(output_file=Path(directory) / "analysis.json")
+            settings = Settings(
+                ha_token="test-token",
+                output_file=Path(directory) / "analysis.json",
+            )
             with patch("octopus_intelligence.scheduler.HomeAssistantClient", FakeClient):
                 with patch("octopus_intelligence.scheduler.run_pipeline") as run:
-                    run_scheduler(settings, interval_hours=0.000001, poll_seconds=0.01, max_runs=2)
+                    run_scheduler(
+                        settings,
+                        interval_hours=1,
+                        poll_seconds=0.01,
+                        max_runs=2,
+                    )
+
+        self.assertEqual(run.call_count, 2)
+
+    def test_scheduler_keeps_timed_fallback(self):
+        with TemporaryDirectory() as directory:
+            settings = Settings(output_file=Path(directory) / "analysis.json")
+            with patch("octopus_intelligence.scheduler.run_pipeline") as run:
+                run_scheduler(
+                    settings,
+                    interval_hours=0.000001,
+                    poll_seconds=0.001,
+                    max_runs=2,
+                )
 
         self.assertEqual(run.call_count, 2)
