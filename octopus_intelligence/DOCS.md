@@ -19,6 +19,9 @@ this format:
 ```
 
 The default entity is `sensor.octopus_price_feed_clean`.
+The app also watches `octopus_energy_electricity_18p6302907_1300007213097_next_day_rates`
+by default and triggers an immediate run when that entity changes from empty to
+populated.
 
 ## Configuration
 
@@ -26,6 +29,8 @@ The default entity is `sensor.octopus_price_feed_clean`.
 - **OpenAI API key:** Optional. Leave empty for deterministic analysis only.
 - **OpenAI model:** A model available to the API project owning the key.
 - **Forecast entity:** Source entity containing `attributes.ai_feed`.
+- **Forecast ready entity:** Entity that becomes populated when the next-day rate
+  feed has arrived.
 - **Analysis entity:** Dashboard sensor created through the Home Assistant API.
 - **Announcement entity:** Existing `input_text` helper refreshed after each run.
 - **Publish announcement:** Disable to leave the announcement helper untouched.
@@ -61,3 +66,6 @@ The current forecast remains available to the dashboard when excluded.
 
 Check the app log first. A failed scheduled run retains the previous successful
 Home Assistant state and retries at the next interval.
+
+If the next-day rate entity remains empty, the app will keep using the normal
+interval schedule.

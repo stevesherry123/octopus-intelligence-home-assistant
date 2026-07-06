@@ -30,3 +30,19 @@ class SchedulerTests(TestCase):
 
         self.assertIn('"state": "degraded"', status)
         self.assertIn('"last_error": "RuntimeError"', status)
+
+    def test_scheduler_triggers_when_forecast_ready_entity_populates(self):
+        class FakeClient:
+            def __init__(self, *_args, **_kwargs):
+                self.states = iter(["", "loaded"])
+
+            def get_state(self, _entity_id):
+                return {"state": next(self.states)}
+
+        with TemporaryDirectory() as directory:
+            settings = Settings(output_file=Path(directory) / "analysis.json")
+            with patch("octopus_intelligence.scheduler.HomeAssistantClient", FakeClient):
+                with patch("octopus_intelligence.scheduler.run_pipeline") as run:
+                    run_scheduler(settings, interval_hours=0.000001, poll_seconds=0.01, max_runs=2)
+
+        self.assertEqual(run.call_count, 2)

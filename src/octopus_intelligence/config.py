@@ -33,6 +33,9 @@ class Settings:
     openai_api_key: str | None = field(default=None, repr=False)
     openai_model: str = "gpt-5.4-mini"
     forecast_entity: str = "sensor.octopus_price_feed_clean"
+    forecast_ready_entity: str = (
+        "octopus_energy_electricity_18p6302907_1300007213097_next_day_rates"
+    )
     analysis_entity: str = "sensor.octopus_intelligence"
     announcement_entity: str = "input_text.announce_text"
     history_url: str = "https://agilebuddy.uk/historic/download/agile/json"
@@ -72,6 +75,9 @@ class Settings:
                 or cls.openai_model
             ),
             forecast_entity=os.getenv("OIE_FORECAST_ENTITY", cls.forecast_entity),
+            forecast_ready_entity=os.getenv(
+                "OIE_FORECAST_READY_ENTITY", cls.forecast_ready_entity
+            ),
             analysis_entity=os.getenv("OIE_ANALYSIS_ENTITY", cls.analysis_entity),
             announcement_entity=os.getenv(
                 "OIE_ANNOUNCEMENT_ENTITY", cls.announcement_entity

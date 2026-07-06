@@ -1,5 +1,5 @@
 name: Octopus Intelligence
-version: "0.5.0"
+version: "0.5.1"
 slug: octopus_intelligence
 description: Local-first Octopus Agile price analysis and AI commentary
 url: https://github.com/stevesherry123/octopus-intelligence-home-assistant
@@ -15,6 +15,7 @@ options:
   openai_api_key: ""
   openai_model: gpt-4o-mini
   forecast_entity: sensor.octopus_price_feed_clean
+  forecast_ready_entity: octopus_energy_electricity_18p6302907_1300007213097_next_day_rates
   analysis_entity: sensor.octopus_intelligence
   announcement_entity: input_text.announce_text
   publish_announcement: true
@@ -26,6 +27,7 @@ schema:
   openai_api_key: password?
   openai_model: str
   forecast_entity: str
+  forecast_ready_entity: str
   analysis_entity: str
   announcement_entity: str
   publish_announcement: bool

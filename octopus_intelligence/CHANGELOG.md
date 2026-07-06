@@ -2,6 +2,14 @@
 
 ## 0.5.0
 
+## 0.5.1
+
+- Trigger an immediate run when the configured next-day rates entity becomes populated.
+- Keep the existing timed cycle as a fallback if the trigger entity does not update.
+- Expose the watched trigger entity in the add-on configuration and startup logs.
+
+## 0.5.0
+
 - Restrict all actionable analysis to complete, upcoming half-hour periods.
 - Exclude elapsed and in-progress periods from averages, comparisons, extrema,
   free/negative alerts, cheapest windows, announcements, and AI commentary.
