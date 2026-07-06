@@ -1,10 +1,6 @@
 # Changelog
 
-## 0.5.2
-
-- Trigger an immediate run when the configured next-day rates entity becomes populated.
-- Keep the existing timed cycle as a fallback if the trigger entity does not update.
-- Expose the watched trigger entity in the add-on configuration and startup logs.
+## 0.5.0
 
 ## 0.5.1
 
