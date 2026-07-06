@@ -6,3 +6,6 @@ __pycache__/
 data/*.json
 *.tar.gz
 *.zip
+.env
+.env.*
+secrets.yaml
