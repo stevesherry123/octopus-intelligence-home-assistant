@@ -4,6 +4,11 @@ Octopus Intelligence compares the upcoming Agile price feed with matching
 half-hour periods from recent history, detects unusually cheap or negative prices,
 and optionally asks OpenAI to produce concise dashboard commentary.
 
+Each run starts its actionable horizon at the next complete half-hour. A period
+that is already in progress is excluded, so recommended cheap windows and alerts
+never point into the past. The sensor exposes `source_forecast_periods` and
+`excluded_elapsed_periods` for diagnostics.
+
 ## Prerequisite
 
 The configured forecast entity must exist and expose an `ai_feed` attribute in
@@ -56,4 +61,3 @@ The current forecast remains available to the dashboard when excluded.
 
 Check the app log first. A failed scheduled run retains the previous successful
 Home Assistant state and retries at the next interval.
-

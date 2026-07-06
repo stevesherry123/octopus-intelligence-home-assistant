@@ -8,7 +8,7 @@ from typing import Any
 from .analysis import analyse_prices
 from .commentary import build_announcement, generate_ai_commentary
 from .config import Settings
-from .forecast import parse_ai_feed
+from .forecast import next_usable_period_start, parse_ai_feed, upcoming_price_points
 from .history import download_history, load_history
 from .home_assistant import HomeAssistantClient
 
@@ -21,6 +21,7 @@ def run_pipeline(
     use_ai: bool = True,
     publish_announcement: bool = True,
 ) -> dict[str, Any]:
+    reference_utc = datetime.now(timezone.utc)
     client = None
     if feed_text is None:
         if not settings.ha_token:
@@ -30,9 +31,18 @@ def run_pipeline(
 
     forecast = parse_ai_feed(
         feed_text,
-        reference_utc=datetime.now(timezone.utc),
+        reference_utc=reference_utc,
         source_timezone=settings.timezone_name,
     )
+    source_forecast_periods = len(forecast)
+    forecast = upcoming_price_points(forecast, reference_utc=reference_utc)
+    if not forecast:
+        cutoff = next_usable_period_start(reference_utc).isoformat().replace(
+            "+00:00", "Z"
+        )
+        raise ValueError(
+            f"Forecast contains no complete periods at or after {cutoff}"
+        )
     history_refresh_status = "cache_current"
     if not settings.history_file.exists():
         download_history(settings.history_file, url=settings.history_url)
@@ -62,6 +72,11 @@ def run_pipeline(
         lookback_days=settings.lookback_days,
         timezone_name=settings.timezone_name,
     )
+    analysis["analysis_reference_utc"] = reference_utc.isoformat().replace(
+        "+00:00", "Z"
+    )
+    analysis["source_forecast_periods"] = source_forecast_periods
+    analysis["excluded_elapsed_periods"] = source_forecast_periods - len(forecast)
     analysis["generated_at_utc"] = datetime.now(timezone.utc).isoformat().replace(
         "+00:00", "Z"
     )

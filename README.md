@@ -3,6 +3,11 @@
 Local-first Octopus Agile price analysis with historical comparisons, a 48-hour
 dashboard, short announcement text, and optional OpenAI commentary.
 
+All actionable figures are calculated from complete, upcoming half-hour periods.
+Elapsed and already-started periods are excluded from averages, historical
+comparisons, extrema, free/negative alerts, cheapest windows, announcements, and
+AI commentary.
+
 ## Home Assistant app installation
 
 Add this repository to the Home Assistant App/Add-on Store:

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "octopus-intelligence"
-version = "0.4.0"
+version = "0.5.0"
 description = "Local-first Octopus Agile price analysis for Home Assistant"
 readme = "README.md"
 requires-python = ">=3.11"

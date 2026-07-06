@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from .models import PricePoint
@@ -13,6 +13,35 @@ FEED_ENTRY = re.compile(
     r"(?P<price>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*p",
     re.IGNORECASE,
 )
+
+HALF_HOUR = timedelta(minutes=30)
+
+
+def next_usable_period_start(reference_utc: datetime) -> datetime:
+    """Return the next half-hour boundary that can be used in full.
+
+    A run exactly on a boundary may use the period beginning at that instant.
+    Once a period has started, recommendations begin at the following boundary.
+    """
+    if reference_utc.tzinfo is None or reference_utc.utcoffset() is None:
+        raise ValueError("reference_utc must be timezone-aware")
+
+    reference_utc = reference_utc.astimezone(timezone.utc)
+    boundary = reference_utc.replace(second=0, microsecond=0)
+    minutes_into_hour = boundary.minute % 30
+    if minutes_into_hour:
+        boundary += timedelta(minutes=30 - minutes_into_hour)
+    elif reference_utc.second or reference_utc.microsecond:
+        boundary += HALF_HOUR
+    return boundary
+
+
+def upcoming_price_points(
+    points: list[PricePoint], *, reference_utc: datetime
+) -> list[PricePoint]:
+    """Discard periods that cannot be consumed for their complete duration."""
+    cutoff = next_usable_period_start(reference_utc)
+    return sorted(point for point in points if point.start_utc >= cutoff)
 
 
 def _nearest_year(day: int, month: int, reference_local: datetime) -> int:
@@ -86,4 +115,3 @@ def parse_ai_feed(
     if len({point.start_utc for point in points}) != len(points):
         raise ValueError("ai_feed resolves to duplicate UTC timestamps")
     return sorted(points)
-
