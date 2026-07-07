@@ -74,6 +74,7 @@ def build_prompt_payload(analysis: dict[str, Any]) -> dict[str, Any]:
         "peak": point(analysis["peak"]),
         "trough": point(analysis["trough"]),
         "cheapest_windows": windows,
+        "daily_pattern": analysis["daily_pattern"],
     }
 
 
@@ -97,6 +98,7 @@ def generate_ai_commentary(
             "or separator. Mention the recent-price comparison, the local time and "
             "price of the peak and trough, and any free or negative periods. Recommend "
             "the supplied 2-hour cheap window, not the 1-hour or 3-hour window. All "
+            "Include the supplied daily pattern summary as one sentence. All "
             "supplied times are already UK local time. Use p/kWh. Do not discuss "
             "household load optimisation. Call the overall average the forecast "
             "average; never call it the current electricity price."

@@ -38,6 +38,11 @@ class CommentaryTests(TestCase):
                 },
                 "3_hours": None,
             },
+            "daily_pattern": {
+                "summary": "The price pattern follows the usual shape.",
+                "follows_expected_pattern": True,
+                "variances": [],
+            },
         }
 
         payload = build_prompt_payload(analysis)
@@ -46,4 +51,8 @@ class CommentaryTests(TestCase):
         self.assertEqual(
             payload["cheapest_windows"]["2_hours"]["start_local"],
             "Mon 06 Jul 12:00",
+        )
+        self.assertEqual(
+            payload["daily_pattern"]["summary"],
+            "The price pattern follows the usual shape.",
         )

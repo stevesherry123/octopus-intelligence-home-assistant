@@ -43,6 +43,84 @@ def _cheapest_window(points: list[PricePoint], periods: int) -> dict | None:
     }
 
 
+def _pattern_summary(points: list[PricePoint], timezone_name: str) -> dict:
+    tz = ZoneInfo(timezone_name)
+    average = mean(point.price_p_per_kwh for point in points)
+    peak = max(points, key=lambda point: point.price_p_per_kwh)
+    morning = [
+        point
+        for point in points
+        if 7 <= point.start_utc.astimezone(tz).hour < 10
+    ]
+    evening = [
+        point
+        for point in points
+        if 16 <= point.start_utc.astimezone(tz).hour < 19
+    ]
+    expected = morning + evening
+    outside_expected = [point for point in points if point not in expected]
+    morning_peak = max(morning, key=lambda point: point.price_p_per_kwh, default=None)
+    evening_peak = max(evening, key=lambda point: point.price_p_per_kwh, default=None)
+    outside_peak = max(
+        outside_expected, key=lambda point: point.price_p_per_kwh, default=None
+    )
+    elevated_threshold = max(average * 1.05, average + 1)
+
+    variances = []
+    if morning_peak is None:
+        variances.append("there is no forecast coverage around 08:00")
+    elif morning_peak.price_p_per_kwh < elevated_threshold:
+        variances.append("the usual 08:00 peak is muted")
+
+    if evening_peak is None:
+        variances.append("there is no forecast coverage from 16:00 to 19:00")
+    elif evening_peak.price_p_per_kwh < elevated_threshold:
+        variances.append("the usual 16:00-19:00 peak is muted")
+
+    peak_local = peak.start_utc.astimezone(tz)
+    if peak not in expected:
+        variances.append(
+            f"the highest price is outside the usual peak windows at "
+            f"{peak_local.strftime('%H:%M')}"
+        )
+    elif outside_peak and outside_peak.price_p_per_kwh > peak.price_p_per_kwh * 0.95:
+        outside_local = outside_peak.start_utc.astimezone(tz)
+        variances.append(
+            f"there is also an unusually high price outside those windows at "
+            f"{outside_local.strftime('%H:%M')}"
+        )
+
+    follows_expected = not variances
+    if follows_expected:
+        sentence = (
+            "The price pattern follows the usual shape, with a morning peak around "
+            "08:00 and a stronger early-evening peak between 16:00 and 19:00."
+        )
+    else:
+        sentence = (
+            "The price pattern varies from the usual 08:00 and 16:00-19:00 peaks: "
+            f"{'; '.join(variances)}."
+        )
+
+    def point(value: PricePoint | None) -> dict | None:
+        if value is None:
+            return None
+        return {
+            **value.as_dict(),
+            "start_local": value.start_utc.astimezone(tz).isoformat(),
+        }
+
+    return {
+        "expected_pattern": "morning peak around 08:00 and evening peak from 16:00 to 19:00",
+        "follows_expected_pattern": follows_expected,
+        "summary": sentence,
+        "morning_peak": point(morning_peak),
+        "evening_peak": point(evening_peak),
+        "outside_expected_peak": point(outside_peak),
+        "variances": variances,
+    }
+
+
 def analyse_prices(
     forecast: Iterable[PricePoint],
     history: Iterable[PricePoint],
@@ -165,6 +243,7 @@ def analyse_prices(
             "2_hours": _cheapest_window(forecast_points, 4),
             "3_hours": _cheapest_window(forecast_points, 6),
         },
+        "daily_pattern": _pattern_summary(forecast_points, timezone_name),
         "data_quality": quality,
         "periods": comparisons,
     }

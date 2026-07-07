@@ -75,3 +75,29 @@ class AnalysisTests(unittest.TestCase):
         self.assertTrue(quality["periods_are_consecutive"])
         self.assertEqual(quality["baseline_slot_coverage_percent"], 100.0)
         self.assertEqual(quality["baseline_days_used"], 8)
+
+    def test_daily_pattern_recognises_usual_morning_and_evening_peaks(self):
+        start = datetime(2026, 7, 5, tzinfo=timezone.utc)
+        values = [12] * 48
+        values[14] = 24
+        values[34] = 35
+        forecast = points(start, values)
+        result = analyse_prices(forecast, [])
+
+        pattern = result["daily_pattern"]
+        self.assertTrue(pattern["follows_expected_pattern"])
+        self.assertIn("usual shape", pattern["summary"])
+        self.assertEqual(pattern["variances"], [])
+
+    def test_daily_pattern_reports_highest_price_outside_usual_windows(self):
+        start = datetime(2026, 7, 5, tzinfo=timezone.utc)
+        values = [12] * 48
+        values[14] = 24
+        values[34] = 30
+        values[24] = 40
+        forecast = points(start, values)
+        result = analyse_prices(forecast, [])
+
+        pattern = result["daily_pattern"]
+        self.assertFalse(pattern["follows_expected_pattern"])
+        self.assertIn("outside the usual peak windows at 13:00", pattern["summary"])

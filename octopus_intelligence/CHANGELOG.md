@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.3
+
+- Add daily pattern commentary comparing prices with the usual 08:00 and 16:00-19:00 peaks.
+- Highlight variances when expected peaks are muted or the highest price falls outside the usual peak windows.
+
 ## 0.5.2
 
 - Trigger an immediate run when the configured next-day rates entity becomes populated.
